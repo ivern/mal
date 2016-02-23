@@ -6,7 +6,7 @@
 
 Mal is a Clojure inspired Lisp interpreter.
 
-Mal is implemented in 44 different languages:
+Mal is implemented in 45 different languages:
 
 * GNU awk
 * Bash shell
@@ -27,6 +27,7 @@ Mal is implemented in 44 different languages:
 * Groovy
 * GNU Guile
 * Haskell
+* Haxe
 * Java
 * JavaScript ([Online Demo](http://kanaka.github.io/mal))
 * Julia
@@ -314,6 +315,28 @@ make
 ./stepX_YYY
 ```
 
+### Haxe
+
+The Haxe implementation of mal requires Haxe version 3.2 to compile.
+Four different Haxe targets are supported: Neko, Python, C++, and
+JavaScript.
+
+```
+cd haxe
+# Neko
+make all-neko
+neko ./stepX_YYY.n
+# Python
+make all-python
+python3 ./stepX_YYY.py
+# C++
+make all-cpp
+./cpp/stepX_YYY
+# JavaScript
+make all-js
+node ./stepX_YYY.js
+```
+
 
 ### Java 1.7
 
@@ -348,7 +371,7 @@ julia stepX_YYY.jl
 
 *The Kotlin implementation was created by [Javier Fernandez-Ivern](https://github.com/ivern)*
 
-The Kotlin implementation of mal has been tested with Kotlin 1.0.0-beta.
+The Kotlin implementation of mal has been tested with Kotlin 1.0.
 
 ```
 cd kotlin

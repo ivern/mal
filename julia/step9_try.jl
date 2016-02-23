@@ -65,7 +65,7 @@ function EVAL(ast, env)
 
     # apply
     ast = macroexpand(ast, env)
-    if !isa(ast, Array) return ast end
+    if !isa(ast, Array) return eval_ast(ast, env) end
 
     if     :def! == ast[1]
         return env_set(env, ast[2], EVAL(ast[3], env))
@@ -125,7 +125,7 @@ function EVAL(ast, env)
         end
     elseif symbol("fn*") == ast[1]
         return MalFunc(
-            (args...) -> EVAL(ast[3], Env(env, ast[2], args)),
+            (args...) -> EVAL(ast[3], Env(env, ast[2], Any[args...])),
             ast[3], env, ast[2])
     else
         el = eval_ast(ast, env)

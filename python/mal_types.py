@@ -18,6 +18,8 @@ else:
 
 def _equal_Q(a, b):
     ota, otb = type(a), type(b)
+    if _string_Q(a) and _string_Q(b):
+        return a == b
     if not (ota == otb or (_sequential_Q(a) and _sequential_Q(b))):
         return False;
     if _symbol_Q(a):
@@ -79,7 +81,7 @@ def _keyword_Q(exp):
 # Functions
 def _function(Eval, Env, ast, env, params):
     def fn(*args):
-        return Eval(ast, Env(env, params, args))
+        return Eval(ast, Env(env, params, List(args)))
     fn.__meta__ = None
     fn.__ast__ = ast
     fn.__gen_env__ = lambda args: Env(env, params, args)

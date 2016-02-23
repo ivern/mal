@@ -166,14 +166,20 @@
 
 ( (fn* (& more) (count more)) 1 2 3)
 ;=>3
+( (fn* (& more) (list? more)) 1 2 3)
+;=>true
 ( (fn* (& more) (count more)) 1)
 ;=>1
 ( (fn* (& more) (count more)) )
 ;=>0
+( (fn* (& more) (list? more)) )
+;=>true
 ( (fn* (a & more) (count more)) 1 2 3)
 ;=>2
 ( (fn* (a & more) (count more)) 1)
 ;=>0
+( (fn* (a & more) (list? more)) 1)
+;=>true
 
 
 ;; Testing language defined not function
@@ -439,12 +445,6 @@ nil
 ;=>4
 ( (fn* [f x] (f x)) (fn* [a] (+ 1 a)) 7)
 ;=>8
-
-;;
-;; -------- Soft tests --------
-;; (when most implementations will implement these tests correctly this section
-;; will be modified to hard failures)
-;>>> soft=True
 
 ;; Nested vector/list equality
 (= [(list)] (list []))

@@ -257,7 +257,7 @@ expression support.
 * If the target language has objects types (OOP), then the next step
   is to create a simple stateful Reader object in `reader.qx`. This
   object will store the tokens and a position. The Reader object will
-  have two methods: `next` and `peek`. `next` returns the tokens at
+  have two methods: `next` and `peek`. `next` returns the token at
   the current position and increments the position. `peek` just
   returns the token at the current position.
 
@@ -273,6 +273,26 @@ expression support.
 ```
 [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)
 ```
+* For each match captured within the parenthesis starting at char 6 of the
+  regular expression a new token will be created.
+
+  * `[\s,]*`: Matches any number of whitespaces or commas. This is not captured
+    so it will be ignored and not tokenized.
+
+  * `~@`: Captures the special two-characters `~@` (tokenized).
+
+  * ```[\[\]{}()'`~^@]```: Captures any special single character, one of
+    ```[]{}'`~^@``` (tokenized).
+
+  * `"(?:\\.|[^\\"])*"`: Starts capturing at a double-quote and stops at the
+    next double-quote unless it was proceeded by a backslash in which case it
+    includes it until the next double-quote (tockenized).
+
+  * `;.*`: Captures any sequence of characters starting with `;` (tokenized).
+
+  * ```[^\s\[\]{}('"`,;)]*```: Captures a sequence of zero or more non special
+    characters (e.g. symbols, numbers, "true", "false", and "nil") and is sort
+    of the inverse of the one above that captures special characters (tokenized).
 
 * Add the function `read_form` to `reader.qx`. This function
   will peek at the first token in the Reader object and switch on the
@@ -894,7 +914,7 @@ diff -urp ../process/step5_tco.txt ../process/step6_file.txt
   (closed over from outside) as the second argument. The result of
   the `EVAL` call is returned. This simple but powerful addition
   allows your program to treat mal data as a mal program. For example,
-  you can now to this: 
+  you can now to this:
 ```
 (def! mal-prog (list + 1 2))
 (eval mal-prog)
@@ -1183,8 +1203,9 @@ simple.
   section), perform macro expansion by calling the `macroexpand`
   function with the current value of `ast` and `env`. Set `ast` to the
   result of that call. If the new value of `ast` is no longer a list
-  after macro expansion, then return `ast`, otherwise continue with
-  the rest of the apply section (special forms switch).
+  after macro expansion, then return the result of calling `eval_ast`
+  on it, otherwise continue with the rest of the apply section
+  (special forms switch).
 
 * Add a new special form condition for `macroexpand`. Call the
   `macroexpand` function using the first `ast` argument (second list
@@ -1300,7 +1321,7 @@ diff -urp ../process/step8_macros.txt ../process/step9_try.txt
     chain). Yes, it is ugly, but you were warned in the section on
     picking a language.
 
-* Add the `throw` core function. 
+* Add the `throw` core function.
   * If your language supports try/catch style exception handling, then
     this function takes a mal type/value and throws/raises it as an
     exception. In order to do this, you may need to create a custom
@@ -1450,7 +1471,7 @@ There is a very good chance that you will encounter an error at some
 point while trying to run the mal in mal implementation steps above.
 Debugging failures that happen while self-hosting is MUCH more
 difficult and mind bending. One of the best approaches I have
-personally found is to add prn statements to the mal implementation 
+personally found is to add prn statements to the mal implementation
 step (not your own implementation of mal) that is causing problems.
 
 Another approach I have frequently used is to pull out the code from
@@ -1479,12 +1500,52 @@ might even be asking if you can continue the "inception" by using your
 implementation to run a mal implementation which itself runs the mal
 implementation.
 
-### Optional
+
+### Optional: gensym
+
+The `or` macro we introduced at step 8 has a bug. It defines a
+variable called `or_FIXME`, which "shadows" such a binding from the
+user's code (which uses the macro). If a user has a variable called
+`or_FIXME`, it cannot be used as an `or` macro argument. In order to
+fix that, we'll introduce `gensym`: a function which returns a symbol
+which was never used before anywhere in the program. This is also an
+example for the use of mal atoms to keep state (the state here being
+the number of symbols produced by `gensym` so far).
+
+Previously you used `rep` to define the `or` macro. Remove that
+definition and use `rep` to define the new counter, `gensym` function
+and the clean `or` macro. Here are the string arguments you need to
+pass to `rep`:
+```
+"(def! *gensym-counter* (atom 0))"
+
+"(def! gensym (fn* [] (symbol (str \"G__\" (swap! *gensym-counter* (fn* [x] (+ 1 x)))))))"
+
+"(defmacro! or (fn* (& xs) (if (empty? xs) nil (if (= 1 (count xs)) (first xs) (let* (condvar (gensym)) `(let* (~condvar ~(first xs)) (if ~condvar ~condvar (or ~@(rest xs)))))))))"
+```
+
+For extra information read [Peter Seibel's thorough discussion about
+`gensym` and leaking macros in Common Lisp](http://www.gigamonkeys.com/book/macros-defining-your-own.html#plugging-the-leaks).
+
+
+### Optional additions
 
 * Add metadata support to composite data types, symbols and native
   functions. TODO
-* `time-ms` TODO
-* `conj` TODO
+* Add the following new core functions:
+  * `time-ms`: takes no arguments and returns the number of
+    milliseconds since epoch (00:00:00 UTC Janurary 1, 1970), or, if
+    not possible, since another point in time (`time-ms` is usually
+    used relatively to measure time durations).  After `time-ms` is
+    implemented, you can run the mal implementation performance
+    benchmarks by running `make perf^quux`.
+  * `conj`: takes a collection and one or more elements as arguments
+    and returns a new collection which includes the original
+    collection and the new elements.  If the collection is a list, a
+    new list is returned with the elements inserted at the start of
+    the given list in opposite order; if the collection is a vector, a
+    new vector is returned with the elements added to the end of the
+    given vector.
 
 
 ## TODO:

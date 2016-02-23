@@ -64,12 +64,10 @@ classdef core
         function ret = get(hm, key)
             if isa(hm, 'types.Nil')
                 ret = type_utils.nil;
+            elseif hm.data.isKey(key)
+                ret = hm.data(key);
             else
-                if hm.data.isKey(key)
-                    ret = hm.data(key);
-                else
-                    ret = type_utils.nil;
-                end
+                ret = type_utils.nil;
             end
         end
 
@@ -100,7 +98,9 @@ classdef core
         end
 
         function ret = first(seq)
-            if length(seq) < 1
+            if isa(seq, 'types.Nil')
+                ret = type_utils.nil;
+            elseif length(seq) < 1
                 ret = type_utils.nil;
             else
                 ret = seq.get(1);
@@ -108,8 +108,12 @@ classdef core
         end
 
         function ret = rest(seq)
-            cella = seq.data(2:end);
-            ret = types.List(cella{:});
+            if isa(seq, 'types.Nil')
+                ret = types.List();
+            else
+                cella = seq.data(2:end);
+                ret = types.List(cella{:});
+            end
         end
 
         function ret = nth(seq, idx)
@@ -137,6 +141,18 @@ classdef core
             end
             cells = cellfun(@(x) f(x), lst.data, 'UniformOutput', false);
             ret = types.List(cells{:});
+        end
+
+        function ret = conj(varargin)
+            seq = varargin{1};
+            args = varargin(2:end);
+            if type_utils.list_Q(seq)
+                cella = [fliplr(args), seq.data];
+                ret = types.List(cella{:});
+            else
+                cella = [seq.data, args];
+                ret = types.Vector(cella{:});
+            end
         end
 
         function new_obj = with_meta(obj, meta)
@@ -226,7 +242,7 @@ classdef core
             n('count') = @(a) 0 + length(a);
             n('apply') = @(varargin) core.apply(varargin{:});
             n('map') = @(varargin) core.map(varargin{:});
-            n('conj') = @(x) disp('not implemented yet');
+            n('conj') = @(varargin) core.conj(varargin{:});
 
             n('with-meta') = @(a,b) core.with_meta(a,b);
             n('meta') = @(a) core.meta(a);
